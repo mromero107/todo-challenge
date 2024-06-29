@@ -1,0 +1,21 @@
+# Ignore compiled Python files
+*.pyc
+
+# Ignore the virtual environment
+venv/
+.venv/
+
+# Ignore the Python cache directory
+__pycache__/
+
+# Ignore IDE-specific files
+.vscode/
+.idea/
+
+# Ignore any other generated or temporary files
+*.swp
+*.swo
+*.bak
+*.tmp
+*.temp
+*.~tmp$

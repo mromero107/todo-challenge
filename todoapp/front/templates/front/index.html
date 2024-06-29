@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% block title %} Invera Challenge {% endblock %}
+{% block content %}
+
+<div class="row">
+    <div class="col">
+    </div>
+    <div class="col-7">
+        <h2 class="mb-4">My Tasks</h2>
+        <div class="input-group mb-3">
+            <input type="text" id="new-task" class="form-control" placeholder="Add new task">
+            <button class="btn btn-success" id="add-task">Add</button>
+        </div>
+        <ul class="list-group" id="task-list">
+            <!-- Tasks will be added here -->
+        </ul>
+    </div>
+    <div class="col">
+    </div>
+</div>
+
+<template id="task-template">
+    <li class="list-group-item d-flex justify-content-between align-items-center task-item">
+        <div class="form-check">
+            <input class="form-check-input checker" type="checkbox" data-action="toggle">
+            <label class="form-check-label task-text" data-title="title"></label>
+        </div>
+        <div class="input-group d-none">
+            <input type="text" class="form-control task-input" data-title="title">
+            <button class="btn btn-success" type="button" data-action="save">Save</button>
+        </div>
+        <div class="btn-group btn-group-sm ms-auto">
+            <button class="btn btn-primary" type="button" data-action="edit">Edit</button>
+            <button class="btn btn-danger" type="button" data-action="delete">Delete</button>
+        </div>
+    </li>
+</template>
+
+{% endblock %}
+
+{% block js_script %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const taskList = document.getElementById('task-list');
+
+        loadTasks();
+
+        document.getElementById('add-task').addEventListener('click', function() {
+            const taskInput = document.getElementById('new-task');
+            const taskName = taskInput.value.trim();
+            if (taskName) {
+                createTask(taskName);
+                taskInput.value = '';
+            }
+        });
+
+        taskList.addEventListener('click', function(event) {
+            const target = event.target;
+            const action = target.getAttribute('data-action');
+            const listItem = target.closest('li');
+
+            if (!listItem) return;
+
+            const taskId = listItem.id;
+            const doneCheckbox = listItem.querySelector('[data-action="toggle"]');
+            const label = listItem.querySelector('.task-text');
+            const formCheck = listItem.querySelector('.form-check');
+            const input = listItem.querySelector('.task-input');
+            const inputGroup = listItem.querySelector('.input-group');
+            const btnGroup = listItem.querySelector('.btn-group');
+
+            if (action === 'edit') {
+                formCheck.classList.add('d-none');
+                btnGroup.classList.add('d-none');
+                input.value = label.textContent.trim();
+                inputGroup.classList.remove('d-none');
+                input.focus();
+            } else if (action === 'save') {
+                inputGroup.classList.add('d-none');
+                formCheck.classList.remove('d-none');
+                btnGroup.classList.remove('d-none');
+                updateTask(taskId, input.value, doneCheckbox.checked);
+            } else if (action === 'delete') {
+                deleteTask(taskId);
+            } else if (action === 'toggle') {
+                updateTask(taskId, label.textContent, doneCheckbox.checked);
+            }
+        });
+    });
+
+
+    function createTaskElement(task) {
+        const template = document.getElementById('task-template').content;
+        const clone = document.importNode(template, true);
+        const listItem = clone.querySelector('li');        
+        const label = clone.querySelector('.task-text');
+        const inputGroup = clone.querySelector('.input-group');
+        const input = clone.querySelector('.task-input');
+        const doneCheckbox = clone.querySelector('[data-action="toggle"]');
+
+        listItem.id = task.id;
+        label.textContent = task.title;
+        input.value = task.title;
+
+        if (task.is_done) {
+            label.classList.add('text-decoration-line-through');
+            doneCheckbox.checked = task.is_done;
+        }
+
+        return listItem;
+    }
+
+    function loadTasks() {
+        fetch('/api/tasks/', { 
+            method: 'GET'
+        })
+        .then(response => response.json())
+        .then(tasks => {
+            const taskList = document.getElementById('task-list');
+            taskList.innerHTML = '';
+            tasks.forEach(task => {
+                const taskItem = createTaskElement(task);
+                taskList.appendChild(taskItem);
+            });
+        });
+    }
+
+    function createTask(title) {
+        fetch('/api/tasks/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({ title: title }),
+        })
+        .then(response => response.json())
+        .then(task => {
+            const taskList = document.getElementById('task-list');
+            const taskItem = createTaskElement(task);
+            taskList.appendChild(taskItem);
+        });
+    }
+
+    function updateTask(id, title, isDone) {
+        fetch(`/api/tasks/${id}/`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({ title: title, is_done: isDone}),
+        })
+        .then(response => {
+            if (response.ok) {
+                const taskItem = document.getElementById(`${id}`);
+                const label = taskItem.querySelector('.task-text');
+                const input = taskItem.querySelector('.task-input');
+                const doneCheckbox = taskItem.querySelector('[data-action="toggle"]');
+                label.textContent = input.value;
+                if (doneCheckbox.checked) {
+                    label.classList.add('text-decoration-line-through');
+                } else {
+                    label.classList.remove('text-decoration-line-through');
+                }
+            } else {
+                throw new Error('Network response was not ok');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+
+    function deleteTask(id) {
+        fetch(`/api/tasks/${id}/`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+        })
+        .then(response => {
+            if (response.ok) {
+                const taskItem = document.getElementById(`${id}`);
+                taskItem.remove();
+            } else {
+                throw new Error('Network response was not ok');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+
+</script>
+
+{% endblock %}
