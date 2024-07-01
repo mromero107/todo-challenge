@@ -33,9 +33,15 @@ To run the To-do App in Docker, follow these steps:
     docker run -d -p 8000:8000 invera.todoapp:latest
     ```
 
-3. Open your web browser and visit `http://localhost:8000` to access the application.
+3. Create superuser if it does not exist:
 
-4. Visit `http://localhost:8000/api/docs` to access the documentation of the API.
+    ```bash
+    docker exec -it invera_todoapp python manage.py createsuperuser
+    ```
+
+4. Open your web browser and visit `http://localhost:8000` to access the application.
+
+5. Visit `http://localhost:8000/api/docs` to access the documentation of the API.
 
 ## Makefile: A fast path to deploy the App.
     To start the services:
@@ -52,7 +58,7 @@ To run the To-do App in Docker, follow these steps:
 ## Create superuser
 
     ```bash
-    make create_superuser
+    make create_superuser username=administrator email=admin@example.com password=SecureP455w0rd
     ```
 
 ## App Usage

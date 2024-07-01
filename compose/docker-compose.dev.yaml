@@ -1,0 +1,20 @@
+services:
+  todoapp:
+    build: ../todoapp/.
+    container_name: invera_todoapp
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+    ports:
+      - "8000:8000"
+    environment:
+      DEBUG: True
+    volumes:
+      - ../todoapp:/code
+    networks:
+      - external_network
+
+networks:
+  external_network:
+    external: true
+    name: $NETWORK_NAME
