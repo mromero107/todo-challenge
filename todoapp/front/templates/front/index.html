@@ -6,6 +6,12 @@
     <div class="col">
     </div>
     <div class="col-7">
+        <div class="d-flex justify-content-end">
+            <form class= id="logout-form" method="post" action="/logout/">
+                <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                <button type="submit" class="btn btn-link">Log out</button>
+            </form>
+        </div>
         <h2 class="mb-4">My Tasks</h2>
         <div class="input-group mb-3">
             <input type="text" id="new-task" class="form-control" placeholder="Add new task">
@@ -42,8 +48,23 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const taskList = document.getElementById('task-list');
 
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        const taskList = document.getElementById('task-list');
         loadTasks();
 
         document.getElementById('add-task').addEventListener('click', function() {
@@ -113,9 +134,16 @@
 
     function loadTasks() {
         fetch('/api/tasks/', { 
-            method: 'GET'
+            method: 'GET',
+            credentials: 'include'
         })
-        .then(response => response.json())
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error('Network response was not ok');
+            }
+        })
         .then(tasks => {
             const taskList = document.getElementById('task-list');
             taskList.innerHTML = '';
@@ -134,12 +162,22 @@
                 'X-CSRFToken': getCSRFToken()
             },
             body: JSON.stringify({ title: title }),
+            credentials: 'include'
         })
-        .then(response => response.json())
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error('Network response was not ok');
+            }
+        })
         .then(task => {
             const taskList = document.getElementById('task-list');
             const taskItem = createTaskElement(task);
             taskList.appendChild(taskItem);
+        })
+        .catch(error => {
+            console.error('Error:', error);
         });
     }
 
@@ -151,6 +189,7 @@
                 'X-CSRFToken': getCSRFToken()
             },
             body: JSON.stringify({ title: title, is_done: isDone}),
+            credentials: 'include'
         })
         .then(response => {
             if (response.ok) {
@@ -180,6 +219,7 @@
                 'Content-Type': 'application/json',
                 'X-CSRFToken': getCSRFToken()
             },
+            credentials: 'include'
         })
         .then(response => {
             if (response.ok) {

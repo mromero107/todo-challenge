@@ -1,5 +1,6 @@
 services:
   todoapp:
+    image: invera.todoapp:1.1.0
     build: ../todoapp/.
     container_name: invera_todoapp
     command: >
