@@ -3,10 +3,10 @@ services:
     image: invera.todoapp:latest
     build: ../todoapp/.
     container_name: invera_todoapp
-    # command: >
-    #   sh -c "python manage.py migrate &&
-    #          python manage.py runserver 0.0.0.0:8000"
-    command: sleep infinity
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+#    command: sleep infinity
     ports:
       - "8000:8000"
     environment:
